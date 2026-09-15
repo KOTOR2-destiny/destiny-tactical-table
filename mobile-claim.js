@@ -1,20 +1,43 @@
-// Mobile player adapter: tapping a locked PC token invokes the existing claim action
-// already attached to that character's token-list row by app.js.
-const viewport = document.getElementById('viewport');
+// Mobile player controls: expose the hidden desktop token-list claim actions as a touch tray.
+const tableView=document.getElementById('tableView');
+const tokenList=document.getElementById('tokenList');
+const roleLabel=document.getElementById('roleLabel');
 
-viewport?.addEventListener('pointerup', (event) => {
-  if (event.pointerType !== 'touch') return;
-  const token = event.target.closest('.token.locked');
-  if (!token) return;
+const tray=document.createElement('div');
+tray.id='mobileClaimTray';
+tray.innerHTML='<div class="mobile-claim-title">CHOOSE YOUR CHARACTER</div><div class="mobile-claim-buttons"></div>';
+document.body.appendChild(tray);
 
-  const label = token.querySelector('.token-name')?.textContent?.replace(/ · YOU$/, '').trim();
-  if (!label) return;
+function syncClaimTray(){
+  const mobile=window.matchMedia('(max-width: 900px)').matches;
+  const inTable=tableView&&!tableView.classList.contains('hidden');
+  const player=roleLabel?.textContent?.trim()==='PLAYER';
+  const buttons=tray.querySelector('.mobile-claim-buttons');
+  buttons.innerHTML='';
+  if(!mobile||!inTable||!player){tray.classList.remove('show');return;}
 
-  const rows = [...document.querySelectorAll('#tokenList .token-row')];
-  const row = rows.find((item) => item.querySelector('span')?.textContent?.trim() === label);
-  if (!row || row.style.cursor !== 'pointer') return;
+  const rows=[...tokenList.querySelectorAll('.token-row')];
+  const mine=rows.find(r=>r.querySelector('.you'));
+  if(mine){
+    tray.querySelector('.mobile-claim-title').textContent=`CONTROL: ${mine.querySelector('span')?.textContent?.trim()||'CHARACTER'}`;
+    tray.classList.add('show','claimed');
+    return;
+  }
 
-  event.preventDefault();
-  event.stopPropagation();
-  row.click();
-}, true);
+  tray.classList.remove('claimed');
+  tray.querySelector('.mobile-claim-title').textContent='CHOOSE YOUR CHARACTER';
+  for(const row of rows){
+    if(row.style.cursor!=='pointer')continue;
+    const name=row.querySelector('span')?.textContent?.trim();
+    if(!name)continue;
+    const b=document.createElement('button');
+    b.type='button';b.textContent=name;
+    b.addEventListener('click',()=>row.click());
+    buttons.appendChild(b);
+  }
+  tray.classList.toggle('show',buttons.children.length>0);
+}
+
+new MutationObserver(syncClaimTray).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style']});
+window.addEventListener('resize',syncClaimTray);
+setTimeout(syncClaimTray,250);

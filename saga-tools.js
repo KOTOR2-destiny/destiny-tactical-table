@@ -56,7 +56,7 @@
     m.label.style.left=`${(m.start.x+p.x)/2}px`;
     m.label.style.top=`${(m.start.y+p.y)/2}px`;
     const squares=distance(m.startSquare,end);
-    m.label.textContent=`${squares} sq · ${squares*1.5} m`;
+    m.label.textContent=`${squares} sq · ${squares*5} ft`;
   }
   viewport.addEventListener('pointermove',e=>{
     if(!measuring||e.pointerId!==measuring.pointerId)return;

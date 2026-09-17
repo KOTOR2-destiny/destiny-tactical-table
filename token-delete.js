@@ -21,7 +21,6 @@ document.head.appendChild(style);
 const isGm=()=>role.textContent.trim().toLowerCase()==='gm';
 function notify(text){const line=document.createElement('div');line.className='feed-entry';line.textContent=text;feed.prepend(line);}
 function paint(){
-  // Remove controls left by the previous version, if any; never attach one per row.
   list.querySelectorAll('.gm-remove-token').forEach(button=>button.remove());
   const tokens=[...layer.querySelectorAll('.token[data-id]')];
   const rows=[...list.querySelectorAll('.token-row')];
@@ -39,7 +38,6 @@ function paint(){
   locationEl.textContent=`Map square ${x+1}, ${y+1} · Token ID ${selectedId.slice(0,8)}`;
   remove.disabled=busy;
 }
-// Capture the exact DOM token clicked, before the table's drag handler handles pointerdown.
 layer.addEventListener('pointerdown',event=>{
   if(!isGm()||busy)return;
   const token=event.target.closest('.token[data-id]');
@@ -50,7 +48,8 @@ layer.addEventListener('pointerdown',event=>{
 },true);
 remove.addEventListener('click',async()=>{
   if(busy||!isGm()||!selectedId)return;
-  const token=[...layer.querySelectorAll('.token[data-id]')].find(el=>el.dataset.id===selectedId);
+  const tokens=[...layer.querySelectorAll('.token[data-id]')];
+  const token=tokens.find(el=>el.dataset.id===selectedId);
   if(!token){selectedId=null;paint();return;}
   const id=selectedId;
   const name=token.querySelector('.token-name')?.textContent?.trim()||'this token';
@@ -60,9 +59,15 @@ remove.addEventListener('click',async()=>{
     const {data,error}=await db.from('scene_tokens').delete().eq('id',id).select('id');
     if(error)throw error;
     if(!data?.some(item=>item.id===id))throw Error('Deletion was not permitted.');
+    // Update the visible map/list immediately. The main app's realtime DELETE handler
+    // also removes the record from its internal state and keeps the session open.
+    const index=tokens.indexOf(token);
+    const row=[...list.querySelectorAll('.token-row')][index];
+    token.remove();
+    row?.remove();
     selectedId=null;
-    notify(`${name} removed. Refreshing table…`);
-    window.location.reload();
+    message.textContent='';
+    notify(`${name} removed. You can select another token without rejoining.`);
   }catch(error){message.textContent=`REMOVE FAILED: ${error.message}`;notify(message.textContent);}
   finally{busy=false;paint();}
 });

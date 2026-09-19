@@ -1,0 +1,4 @@
+// The core app boots into the lobby on refresh. Restore only intentional grid-resize reloads.
+const key='destiny-grid-resize-resume';
+const target=sessionStorage.getItem(key);
+if(target){let done=false;const gm=document.getElementById('gmCampaigns'),player=document.getElementById('playerCampaigns');const tryResume=()=>{if(done)return;for(const list of [gm,player]){for(const card of list?.querySelectorAll('.campaign-card')||[]){const label=card.querySelector('small')?.textContent||'';if(label.includes(target)){const enter=card.querySelector('button');if(enter){done=true;sessionStorage.removeItem(key);observer.disconnect();enter.click();return;}}}}};const observer=new MutationObserver(tryResume);if(gm)observer.observe(gm,{childList:true,subtree:true});if(player)observer.observe(player,{childList:true,subtree:true});tryResume();window.addEventListener('pagehide',()=>observer.disconnect(),{once:true});}

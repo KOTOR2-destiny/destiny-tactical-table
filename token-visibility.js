@@ -1,0 +1,17 @@
+// GM token visibility control: pre-place encounters without exposing them to players.
+import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.105.0';
+const db=createClient('https://zeyvkuhqgbqjqalxubrq.supabase.co','sb_publishable_trF3YpEfBC7rMZpxs0lzzg_utxyNU7t');
+const layer=document.getElementById('tokenLayer'),role=document.getElementById('roleLabel'),table=document.getElementById('tableView');
+const panel=document.createElement('section');panel.id='tokenVisibilityPanel';panel.hidden=true;
+panel.innerHTML='<div class="panel-title">TOKEN VISIBILITY</div><div id="tokenVisibilityName" class="small">Select a token.</div><button id="tokenVisibilityToggle" type="button" class="secondary" disabled>HIDE FROM PCs</button><div id="tokenVisibilityStatus" class="message" role="status" aria-live="polite"></div>';
+document.getElementById('tokenList').parentElement.insertBefore(panel,document.getElementById('tokenList'));
+const nameEl=panel.querySelector('#tokenVisibilityName'),button=panel.querySelector('#tokenVisibilityToggle'),status=panel.querySelector('#tokenVisibilityStatus');
+let selected=null,current=null,busy=false,serial=0;
+const gm=()=>role.textContent.trim().toLowerCase()==='gm'&&!table.classList.contains('hidden');
+function visibility(){panel.hidden=!gm();if(!gm()){selected=null;current=null;button.disabled=true;nameEl.textContent='Select a token.';status.textContent='';}}
+async function refresh(){visibility();const id=selected,request=++serial;if(!id||!gm())return;const {data,error}=await db.from('scene_tokens').select('id,label,hidden').eq('id',id).maybeSingle();if(request!==serial||id!==selected)return;if(error||!data){current=null;button.disabled=true;nameEl.textContent='Token unavailable.';return;}current=data;nameEl.textContent=data.label;button.disabled=false;button.textContent=data.hidden?'REVEAL TO PCs':'HIDE FROM PCs';button.classList.toggle('token-reveal',data.hidden===true);}
+layer.addEventListener('pointerdown',e=>{if(!gm())return;const token=e.target.closest('.token[data-id]');if(!token)return;selected=token.dataset.id;status.textContent='';refresh();},true);
+button.addEventListener('click',async()=>{if(!gm()||!current||busy)return;busy=true;button.disabled=true;const next=!current.hidden;status.textContent=next?'Hiding token from PCs…':'Revealing token to PCs…';try{const {data,error}=await db.from('scene_tokens').update({hidden:next}).eq('id',current.id).select('id,label,hidden').single();if(error||!data)throw error||Error('Visibility update rejected.');current=data;button.textContent=data.hidden?'REVEAL TO PCs':'HIDE FROM PCs';button.classList.toggle('token-reveal',data.hidden===true);status.textContent=data.hidden?data.label+' is hidden from PCs.':data.label+' is visible to PCs.';}catch(e){status.textContent='Visibility update failed: '+e.message;}finally{busy=false;button.disabled=false;}});
+const observer=new MutationObserver(()=>{visibility();if(selected&&gm()){if(!layer.querySelector(`.token[data-id="${CSS.escape(selected)}"]`)){selected=null;current=null;button.disabled=true;nameEl.textContent='Select a token.';}else refresh();}});
+observer.observe(layer,{childList:true});observer.observe(role,{childList:true,subtree:true,characterData:true});observer.observe(table,{attributes:true,attributeFilter:['class']});
+visibility();

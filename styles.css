@@ -10,3 +10,6 @@
 
 /* v0.4.7 PC exploration fog for hidden modular backdrop pieces. */
 .pc-backdrop-fog{background:#000;pointer-events:none;box-shadow:inset 0 0 0 1px #080808}
+
+/* v0.4.8 GM token visibility control. */
+#tokenVisibilityPanel{margin:10px 0;padding:10px;border:1px solid #477d9a;background:rgba(18,54,74,.35)}#tokenVisibilityPanel[hidden]{display:none!important}#tokenVisibilityPanel button{width:100%}.token-reveal{border-color:#f0c45a!important;color:#ffe49a!important}

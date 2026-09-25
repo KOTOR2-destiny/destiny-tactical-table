@@ -28,3 +28,6 @@
 
 /* v0.5.9 explicit NPC act/scene participation toggles */
 .npc-scene-picker{display:block;margin:8px 0}.npc-scene-label{display:block;font-size:11px;letter-spacing:.08em;color:#8aa0ad;margin-bottom:6px}.npc-scene-toggles{display:flex;flex-wrap:wrap;gap:5px;max-height:190px;overflow:auto;padding:6px;border:1px solid #24414f;background:#03090d}.npc-scene-toggle{border:1px solid #315362;background:#08151c;color:#8ba0ab;padding:5px 8px;font:inherit;font-size:11px;cursor:pointer;text-align:left}.npc-scene-toggle:hover{border-color:#13d7ff;color:#d8f8ff}.npc-scene-toggle[aria-pressed="true"]{background:#13d7ff;color:#001018;border-color:#7cecff;font-weight:800;box-shadow:0 0 8px rgba(19,215,255,.3)}
+
+/* v0.6.0 structured scene visual/map briefs */
+.scene-brief-card details{margin:7px 0;border:1px solid #203a47;background:#03090d}.scene-brief-card summary{cursor:pointer;padding:6px 8px;color:#8aa0ad;font-size:11px;letter-spacing:.07em}.scene-source-brief{padding:8px;color:#93a9b5;font-size:11px;line-height:1.45;border-top:1px solid #203a47;max-height:140px;overflow:auto}.scene-brief-card textarea[data-k="visualPrompt"]{min-height:88px}

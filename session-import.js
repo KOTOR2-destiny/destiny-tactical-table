@@ -1,4 +1,4 @@
-// v0.5.3 Session Import & Manifest Builder. GM-only, client-side DOCX/TXT/MD extraction; saves reviewable draft to the active game session.
+// v0.5.4 Session Import & Manifest Builder. GM-only, client-side DOCX/TXT/MD extraction; saves reviewable draft to the active game session.
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.105.0';
 const db=createClient('https://zeyvkuhqgbqjqalxubrq.supabase.co','sb_publishable_trF3YpEfBC7rMZpxs0lzzg_utxyNU7t');
 const role=document.getElementById('roleLabel'),table=document.getElementById('tableView'),codeEl=document.getElementById('codeLabel'),sidebar=document.querySelector('.left-panel');
@@ -19,7 +19,12 @@ function associateEncounter(blocks,blockIndex,scenes,name){
  const norm=s=>clean(s).toLowerCase(),needle=norm(name),aliases=[needle];
  if(/heroic gladiator/.test(needle))aliases.push('heroic gladiator');if(/nonheroic gladiator/.test(needle))aliases.push('nonheroic gladiator');
  let use=-1;for(let i=0;i<blocks.length;i++){if(i===blockIndex)continue;const t=norm(blocks[i].text);if(aliases.some(a=>a&&t.includes(a))&&!/^(damage|defenses|abilities|feats|talents|skills|melee|ranged|hp|init|speed)/i.test(t)){use=i;break}}
- const at=use>=0?use:blockIndex;let heading='';for(let i=at;i>=0;i--){if(/^h[1-4]$/.test(blocks[i].tag)){heading=blocks[i].text;break}}
+ const at=use>=0?use:blockIndex;
+ // First prefer the nearest explicit Scene heading. Subheadings such as Qualifier Randomizer,
+ // Security or Reinforcements are children of that scene and should not orphan their assets.
+ let parentScene='';for(let i=at;i>=0;i--){const t=blocks[i].text;if(/^scene\s+\d+\s*[:—–-]/i.test(t)){parentScene=t;break}}
+ if(parentScene){const exact=scenes.find(s=>norm(s.name)===norm(parentScene));if(exact)return {sceneId:exact.id,sceneName:exact.name,sourceContext:parentScene}}
+ let heading='';for(let i=at;i>=0;i--){if(/^h[1-4]$/.test(blocks[i].tag)){heading=blocks[i].text;break}}
  let best=null,bestScore=0;for(const s of scenes){const label=sceneLabel(s.name),words=norm(label).split(/\s+/).filter(w=>w.length>3&&!/scene|encounter|act|part|chapter/.test(w));let score=words.reduce((n,w)=>n+(norm(heading).includes(w)?1:0),0);if(score>bestScore){best=s;bestScore=score}}
  return {sceneId:best?.id||'',sceneName:best?.name||heading||'',sourceContext:heading||''}
 }

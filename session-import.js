@@ -1,4 +1,4 @@
-// v0.5.4 Session Import & Manifest Builder. GM-only, client-side DOCX/TXT/MD extraction; saves reviewable draft to the active game session.
+// v0.5.5 Session Import & Manifest Builder. GM-only, client-side DOCX/TXT/MD extraction; saves reviewable draft to the active game session.
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.105.0';
 const db=createClient('https://zeyvkuhqgbqjqalxubrq.supabase.co','sb_publishable_trF3YpEfBC7rMZpxs0lzzg_utxyNU7t');
 const role=document.getElementById('roleLabel'),table=document.getElementById('tableView'),codeEl=document.getElementById('codeLabel'),sidebar=document.querySelector('.left-panel');
@@ -18,12 +18,15 @@ function sceneLabel(text=''){return clean(text).replace(/^act\s+[ivxlcdm0-9]+\s*
 function associateEncounter(blocks,blockIndex,scenes,name){
  const norm=s=>clean(s).toLowerCase(),needle=norm(name),aliases=[needle];
  if(/heroic gladiator/.test(needle))aliases.push('heroic gladiator');if(/nonheroic gladiator/.test(needle))aliases.push('nonheroic gladiator');
- let use=-1;for(let i=0;i<blocks.length;i++){if(i===blockIndex)continue;const t=norm(blocks[i].text);if(aliases.some(a=>a&&t.includes(a))&&!/^(damage|defenses|abilities|feats|talents|skills|melee|ranged|hp|init|speed)/i.test(t)){use=i;break}}
- const at=use>=0?use:blockIndex;
- // First prefer the nearest explicit Scene heading. Subheadings such as Qualifier Randomizer,
- // Security or Reinforcements are children of that scene and should not orphan their assets.
- let parentScene='';for(let i=at;i>=0;i--){const t=blocks[i].text;if(/^scene\s+\d+\s*[:—–-]/i.test(t)){parentScene=t;break}}
- if(parentScene){const exact=scenes.find(s=>norm(s.name)===norm(parentScene));if(exact)return {sceneId:exact.id,sceneName:exact.name,sourceContext:parentScene}}
+ // Prefer the asset's stat-block/action context over its first narrative introduction.
+ let uses=[];for(let i=0;i<blocks.length;i++){if(i===blockIndex)continue;const t=norm(blocks[i].text);if(aliases.some(a=>a&&t.includes(a))&&!/^(damage|defenses|abilities|feats|talents|skills|melee|ranged|hp|init|speed)/i.test(t))uses.push(i)}
+ const at=blockIndex;
+ // Most-specific actionable heading wins: Match/Encounter headings near the stat block or use.
+ const candidates=[at,...uses].sort((a,b)=>Math.abs(a-at)-Math.abs(b-at));
+ for(const pos of candidates){for(let i=pos;i>=Math.max(0,pos-18);i--){const h=blocks[i];if(!/^h[1-4]$/.test(h.tag))continue;if(/^(match|encounter)\b/i.test(h.text)){const exact=scenes.find(s=>norm(s.name)===norm(h.text));if(exact)return {sceneId:exact.id,sceneName:exact.name,sourceContext:h.text}}}}
+ // Otherwise inherit the explicit containing Scene of the stat block/action context.
+ for(const pos of candidates){for(let i=pos;i>=0;i--){const t=blocks[i].text;if(/^scene\s+\d+\s*[:—–-]/i.test(t)){const exact=scenes.find(s=>norm(s.name)===norm(t));if(exact)return {sceneId:exact.id,sceneName:exact.name,sourceContext:t};break}}}
+ // Last resort: prior heading/name similarity.
  let heading='';for(let i=at;i>=0;i--){if(/^h[1-4]$/.test(blocks[i].tag)){heading=blocks[i].text;break}}
  let best=null,bestScore=0;for(const s of scenes){const label=sceneLabel(s.name),words=norm(label).split(/\s+/).filter(w=>w.length>3&&!/scene|encounter|act|part|chapter/.test(w));let score=words.reduce((n,w)=>n+(norm(heading).includes(w)?1:0),0);if(score>bestScore){best=s;bestScore=score}}
  return {sceneId:best?.id||'',sceneName:best?.name||heading||'',sourceContext:heading||''}

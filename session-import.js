@@ -1,4 +1,4 @@
-// v0.5.8 Session Import & Manifest Builder. GM-only, client-side DOCX/TXT/MD extraction; saves reviewable draft to the active game session.
+// v0.5.8.1 Session Import & Manifest Builder. GM-only, client-side DOCX/TXT/MD extraction; saves reviewable draft to the active game session.
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.105.0';
 const db=createClient('https://zeyvkuhqgbqjqalxubrq.supabase.co','sb_publishable_trF3YpEfBC7rMZpxs0lzzg_utxyNU7t');
 const role=document.getElementById('roleLabel'),table=document.getElementById('tableView'),codeEl=document.getElementById('codeLabel'),sidebar=document.querySelector('.left-panel');
@@ -37,7 +37,11 @@ function npcRole(text=''){if(/wookiee|champion|bruiser|recruit/i.test(text))retu
 function npcKey(name=''){return clean(name).toLowerCase().replace(/[’']/g,"'")}
 function npcSceneParticipation(blocks,scenes,name){
  const norm=s=>clean(s).toLowerCase(),needle=norm(name),ids=[],evidence={};if(!needle)return {sceneIds:[],sceneNames:[],sceneEvidence:{}};
- for(let i=0;i<blocks.length;i++){if(!norm(blocks[i].text).includes(needle))continue;let heading='';for(let j=i;j>=0;j--){if(/^h[1-4]$/.test(blocks[j].tag)&&/^(scene|match|encounter)\b/i.test(blocks[j].text)){heading=blocks[j].text;break}}if(!heading)continue;const scene=scenes.find(s=>norm(s.name)===norm(heading));if(scene&&!ids.includes(scene.id)){ids.push(scene.id);evidence[scene.id]=clean(blocks[i].text).slice(0,220)}}
+ const mentions=[];for(let i=0;i<blocks.length;i++){const t=norm(blocks[i].text);if(t.includes(needle)&&!/^important npcs?$/i.test(blocks[i].text))mentions.push(i)}
+ // Narrative mentions before an NPC's first actionable appearance are often foreshadowing/objectives, not token presence.
+ let firstAction=-1;for(const i of mentions){const t=blocks[i].text;if(/^.{0,90}\(CL\s*\d+\)/i.test(t)||/\b(arrives?|appears?|enters?|stands?|waits?|attacks?|fights?|speaks?|says?|greets?|confronts?|joins?|present|here|inside|room|chamber|arena)\b/i.test(t)){firstAction=i;break}}
+ if(firstAction<0&&mentions.length)firstAction=mentions[0];
+ for(const i of mentions){if(i<firstAction)continue;let heading='';for(let j=i;j>=0;j--){if(/^h[1-4]$/.test(blocks[j].tag)&&/^(scene|match|encounter)\b/i.test(blocks[j].text)){heading=blocks[j].text;break}}if(!heading)continue;const scene=scenes.find(s=>norm(s.name)===norm(heading));if(scene&&!ids.includes(scene.id)){ids.push(scene.id);evidence[scene.id]=clean(blocks[i].text).slice(0,220)}}
  return {sceneIds:ids,sceneNames:ids.map(id=>scenes.find(s=>s.id===id)?.name).filter(Boolean),sceneEvidence:evidence}
 }
 function deploymentIntent(blocks,idx,qty){

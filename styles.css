@@ -25,3 +25,6 @@
 .npc-scene-participation option{background:#071018;color:#70808c;padding:4px 6px}
 .npc-scene-participation option:checked{background:#13d7ff linear-gradient(0deg,#13d7ff 0%,#13d7ff 100%);color:#001018;font-weight:800}
 .npc-scene-participation:focus option:checked{background:#13d7ff linear-gradient(0deg,#13d7ff 0%,#13d7ff 100%);color:#001018}
+
+/* v0.5.9 explicit NPC act/scene participation toggles */
+.npc-scene-picker{display:block;margin:8px 0}.npc-scene-label{display:block;font-size:11px;letter-spacing:.08em;color:#8aa0ad;margin-bottom:6px}.npc-scene-toggles{display:flex;flex-wrap:wrap;gap:5px;max-height:190px;overflow:auto;padding:6px;border:1px solid #24414f;background:#03090d}.npc-scene-toggle{border:1px solid #315362;background:#08151c;color:#8ba0ab;padding:5px 8px;font:inherit;font-size:11px;cursor:pointer;text-align:left}.npc-scene-toggle:hover{border-color:#13d7ff;color:#d8f8ff}.npc-scene-toggle[aria-pressed="true"]{background:#13d7ff;color:#001018;border-color:#7cecff;font-weight:800;box-shadow:0 0 8px rgba(19,215,255,.3)}

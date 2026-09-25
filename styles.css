@@ -4,3 +4,6 @@
 
 /* v0.4.1 pan-render stabilization: keep large transformed grid on its own compositor layer. */
 .world{will-change:transform;backface-visibility:hidden;transform-style:flat;contain:layout paint}.map-layer,.grid-layer,.token-layer{backface-visibility:hidden}.grid-layer{transform:translateZ(0);will-change:transform;background-repeat:repeat;background-position:0 0}
+
+/* v0.4.4 fixed world stack: scenery < grid < tokens. Backdrop z-order is local to mapLayer only. */
+.map-layer{z-index:0}.grid-layer{z-index:1000}.token-layer{z-index:2000}.measure-layer{z-index:3000}
